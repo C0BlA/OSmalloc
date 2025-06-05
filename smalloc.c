@@ -77,6 +77,14 @@ void* smalloc(size_t size) {
         if (!found) abort();
 
         if (old_header->size >= size) {
+
+            /*
+            1. 할당된 메모리를 사용 중 일수도 있는데, 그냥 줄여도 되는가? 
+            (사용자에게 책임을 전가할 것인가?) 
+
+            */
+
+
             return ptr;
         }
 
@@ -158,10 +166,12 @@ void smcoalesce() {
         }
     }
 }
+
 /*---------------------위에가 malloc 관련----------------------*/
 
 
 /*-------------------아래부터 maze (코드 관련)-----------------*/
+
 typedef struct {
     short int vert;  // 세로
     short int horiz; // 가로
@@ -385,7 +395,6 @@ int solveMaze(int **maze, int **visited, int n, int m) {
     initStack();
 
     //초기 시작 위치 넣기
-    //항상 고정되어 있음.
     element position = {1, 1, 0};
 
     //시작 위치 0으로 표시
