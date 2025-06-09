@@ -38,8 +38,7 @@ void* smalloc(size_t size) {
     if (!block) block = Make_Addtional_Page(size); // 없으면 새 페이지 요청
     if (!block) return NULL;
 
-    // 분할
-    if (block->size >= size + HEADER_SIZE + 8) {
+    if (block->size >= size + HEADER_SIZE + 8) { // 자료형 크기를 고려해서 8 or 16바이트 고려
         header* new_block = (header*)((char*)block + HEADER_SIZE + size);
         new_block->size = block->size - size - HEADER_SIZE;
         new_block->used = 0;
@@ -53,13 +52,15 @@ void* smalloc(size_t size) {
     return (void*)(block + 1);
     }
 
+
+
     void* srealloc(void* ptr, size_t size) {
 
         if (ptr == NULL) return smalloc(size);
 
         header* old_header = (header*)ptr - 1;
 
-        if (size == 0) {
+        if (size <= 0) {
             sfree(ptr);
             return NULL;
         }
@@ -76,19 +77,22 @@ void* smalloc(size_t size) {
         }
         if (!found) abort();
 
-        if (old_header->size >= size) {
+        
+        if (old_header->size >= size) { //안에 있는데 데이터 관리는 사용자 책임
+            if(old_header->size - size >= HEADER_SIZE + 8){
 
-            /*
-            1. 할당된 메모리를 사용 중 일수도 있는데, 그냥 줄여도 되는가? 
-            (사용자에게 책임을 전가할 것인가?) 
+            
+                header* new_block = (header*)((char*)old_header + HEADER_SIZE + size);
+                new_block->size = old_header->size - size - HEADER_SIZE;
+                new_block->used = 0;
+                new_block->next = old_header->next;
 
-            */
+                old_header->size = size;
+                old_header->next = new_block;
 
-
+            }
             return ptr;
         }
-
-
 
         void* new_ptr = smalloc(size);
         if (!new_ptr) return NULL;
@@ -125,7 +129,7 @@ void* Make_Addtional_Page(size_t size) {
 
 header* find_block(size_t size) {
     header* curr = heap_start;
-    header* best = NULL; // 가장 사이즈가 잘 맞는 블록
+    header* best = NULL; // 원하는 의도랑 가장 사이즈가 잘 맞는 블록
 
     while (curr) {
         if (!curr->used && curr->size >= size) { //사이즈 확인 
@@ -140,20 +144,6 @@ header* find_block(size_t size) {
     return best;
 }
 
-
-
-// 메모리 해제
-void sfree(void* ptr) {
-    if (!ptr) return;
-    header* h = (header*)ptr - 1;
-    h->used = 0;
-}
-
-// 모드 변경
-void sset_mode(mode m) {
-    _mode = m;
-}
-
 // 블록 병합
 void smcoalesce() {
     header* curr = heap_start;
@@ -166,6 +156,21 @@ void smcoalesce() {
         }
     }
 }
+
+// 메모리 해제
+void sfree(void* ptr) {
+    if (!ptr) return;
+    header* h = (header*)ptr - 1;
+    h->used = 0;
+    smcoalesce();
+}
+
+// 모드 변경
+void sset_mode(mode m) {
+    _mode = m;
+}
+
+
 
 /*---------------------위에가 malloc 관련----------------------*/
 
@@ -364,6 +369,9 @@ void push(element item) {
     if (top >= stackSize) {
         stackSize *= 2;
         stack = (element *)srealloc(stack, stackSize * sizeof(element));
+
+        printf("srealloc이 사용되었습니다. %d\n", stackSize);  // 디버깅용
+
     }
     stack[top++] = item;
 
