@@ -65,19 +65,13 @@ int bounded_buffer_extend(int a)
         pthread_mutex_lock(&(buf->lock));
         int extend_capacity = buf->capacity + a;
         char **new_elem = (char **)realloc(buf->elem, sizeof(char *) * extend_capacity);
-        if (new_elem == 0x0)
-        {
-                pthread_mutex_unlock(&(buf->lock));
-                sem_post(&(buf->empty));
-                return -1;
-        }
         buf->elem = new_elem;
         buf->capacity = extend_capacity;
-        for (int i = buf->num; i < extend_capacity; i++)
+        for(int i = 0; i < a; i++)
         {
-                buf->elem[i] = 0x0;
+                buf->elem[buf->capacity - a + i] = 0x0; 
         }
-        buf->rear = buf->num;
+        buf->rear = buf->num;   
         buf->front = 0;
         pthread_mutex_unlock(&(buf->lock));
         sem_post(&(buf->empty));

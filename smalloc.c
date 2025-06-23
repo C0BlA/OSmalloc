@@ -32,7 +32,7 @@ static header* heap_start = NULL;
 static size_t PAGE_SIZE = 4096;
 
 // 메모리 할당
-void* smalloc(size_t size) {
+    void* smalloc(size_t size) {
     if (size == 0) return NULL;
     header* block = find_block(size); //크기 맞는거 찾기
     if (!block) block = Make_Addtional_Page(size); // 없으면 새 페이지 요청
@@ -162,7 +162,7 @@ void sfree(void* ptr) {
     if (!ptr) return;
     header* h = (header*)ptr - 1;
     h->used = 0;
-    smcoalesce();
+    smcoalesce();   
 }
 
 // 모드 변경
@@ -209,7 +209,7 @@ typedef struct {
 
 element *stack;         // 스택
 int top = 0;            // 스택 포인터
-int stackSize = 1000;   // 초기 스택 크기
+int stackSize = 2// 깊이 크기
 
 
 
